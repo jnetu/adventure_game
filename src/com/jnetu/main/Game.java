@@ -3,12 +3,17 @@ package com.jnetu.main;
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JFrame;
+
+import com.jnetu.entities.Entity;
+import com.jnetu.entities.Player;
+import com.jnetu.graphics.Spritesheet;
 
 public class Game extends Canvas implements Runnable {
 	
@@ -23,8 +28,9 @@ public class Game extends Canvas implements Runnable {
 	
 	private BufferedImage image;
 	
-	private Spritesheet spritesheet;
-	private BufferedImage player;
+	public Spritesheet spritesheet;
+	public List<Entity> entities;
+	
 	
 	public Game(){
 		this.setPreferredSize(new Dimension(WIDTH*SCALE,HEIGHT*SCALE)); //set canvas dimensions
@@ -36,13 +42,13 @@ public class Game extends Canvas implements Runnable {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //break application on exit
 		frame.setVisible(true);
 		
-		
 		image = new BufferedImage(WIDTH,HEIGHT,BufferedImage.TYPE_INT_RGB); //layer background
 		
-		//spritesheet
+		entities = new ArrayList<Entity>();
 		spritesheet = new Spritesheet("/spritesheet.png");
-		player = spritesheet.getSprite(0, 0, 16, 16);
 		
+		Player player = new Player(0,0,16,16,spritesheet.getSprite(0, 0, 16, 16));
+		entities.add(player);
 	}
 	
 	public static void main(String[] args) {
@@ -64,7 +70,10 @@ public class Game extends Canvas implements Runnable {
 	}
 	
 	public void tick() {
-		//System.out.print("tick");
+		for(int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
+			e.tick();
+		}
 	}
 	
 	public void render() {
@@ -78,20 +87,11 @@ public class Game extends Canvas implements Runnable {
 		g.setColor(new Color(100,100,100));
 		g.fillRect(0, 0, WIDTH, HEIGHT);
 		
-		
-		
-		//draw small rect
-		g.setColor(new Color(120,120,120));
-		g.fillRect(0, 0, WIDTH / 2, HEIGHT / 2);
-		
-		
-		//draw strings
-		g.setFont(new Font("Times",Font.BOLD,22));
-		g.setColor(new Color(0,0,0));
-		g.drawString("HELLO WORLD", WIDTH / 2 - 70, HEIGHT / 2);
-		
-		//draw sprite
-		g.drawImage(player, 20, 20, null);
+		//render entities
+		for(int i = 0; i < entities.size(); i++) {
+			Entity e = entities.get(i);
+			e.render(g);
+		}
 		
 		
 		//draw background
