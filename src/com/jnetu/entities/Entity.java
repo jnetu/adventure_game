@@ -4,10 +4,10 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 public class Entity {
-	private int x;
-	private int y;
-	private int width;
-	private int height;
+	public int x;
+	public int y;
+	public int width;
+	public int height;
 	
 	private BufferedImage sprite;
 	

@@ -4,6 +4,8 @@ import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
@@ -14,12 +16,13 @@ import javax.swing.JFrame;
 import com.jnetu.entities.Entity;
 import com.jnetu.entities.Player;
 import com.jnetu.graphics.Spritesheet;
+import com.jnetu.world.World;
 
-public class Game extends Canvas implements Runnable {
+public class Game extends Canvas implements Runnable, KeyListener {
 	
 	
-	private final int WIDTH = 640;
-	private final int HEIGHT = 448;
+	private final int WIDTH = 320;
+	private final int HEIGHT = 320;
 	private final int SCALE = 2;
 	public static JFrame frame;
 	
@@ -28,11 +31,17 @@ public class Game extends Canvas implements Runnable {
 	
 	private BufferedImage image;
 	
-	public Spritesheet spritesheet;
+	public static Spritesheet spritesheet;
 	public List<Entity> entities;
+	
+	private Player player;
+	
+	public static World world;
+	
 	
 	
 	public Game(){
+		addKeyListener(this);
 		this.setPreferredSize(new Dimension(WIDTH*SCALE,HEIGHT*SCALE)); //set canvas dimensions
 		frame = new JFrame("adventure game");
 		frame.add(this); //add Canvas
@@ -42,12 +51,16 @@ public class Game extends Canvas implements Runnable {
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); //break application on exit
 		frame.setVisible(true);
 		
+		
+		
+		
+		
 		image = new BufferedImage(WIDTH,HEIGHT,BufferedImage.TYPE_INT_RGB); //layer background
 		
 		entities = new ArrayList<Entity>();
 		spritesheet = new Spritesheet("/spritesheet.png");
-		
-		Player player = new Player(0,0,16,16,spritesheet.getSprite(0, 0, 16, 16));
+		world = new World("/map.png");
+		player = new Player(0,0,16,16,spritesheet.getSprite(0, 0, 16, 16));
 		entities.add(player);
 	}
 	
@@ -86,6 +99,11 @@ public class Game extends Canvas implements Runnable {
 		Graphics g = image.getGraphics();
 		g.setColor(new Color(100,100,100));
 		g.fillRect(0, 0, WIDTH, HEIGHT);
+		
+		
+		
+		//render world
+		world.render(g);
 		
 		//render entities
 		for(int i = 0; i < entities.size(); i++) {
@@ -130,6 +148,59 @@ public class Game extends Canvas implements Runnable {
 			}
 			
 		}
+	}
+
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
+			System.out.println("direita");
+			player.right = true;
+			
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
+			System.out.println("esquerda");
+			player.left = true;
+		}
+		
+		if(e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
+			System.out.println("cima");
+			player.up = true;
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
+			System.out.println("baixo");
+			player.down = true;
+		}
+		
+		
+	}
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		if(e.getKeyCode() == KeyEvent.VK_RIGHT || e.getKeyCode() == KeyEvent.VK_D) {
+			System.out.println("direita");
+			player.right = false;
+			
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_A) {
+			System.out.println("esquerda");
+			player.left = false;
+		}
+		
+		if(e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
+			System.out.println("cima");
+			player.up = false;
+		}
+		else if(e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
+			System.out.println("baixo");
+			player.down = false;
+		}
+		
 	}
 
 }
