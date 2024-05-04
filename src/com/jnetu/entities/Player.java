@@ -4,25 +4,38 @@ import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 
 import com.jnetu.graphics.Spritesheet;
+import com.jnetu.main.Game;
+import com.jnetu.world.Camera;
+import com.jnetu.world.World;
 
-public class Player extends Entity{
+public class Player extends Entity {
 
 	public boolean right, left, up, down;
-	public float speed = 1;
-	
-	private int frames = 0,maxFrames = 5;
-	private int index  = 0,maxIndex = 1;
+	public float speed = 1.0f;
+
+	private int frames = 0, maxFrames = 5;
+	private int index = 0, maxIndex = 1;
 	private boolean moved = false;
-	
-	
+
 	private BufferedImage[] rightPlayer;
 	private BufferedImage[] leftPlayer;
 	private BufferedImage[] upPlayer;
 	private BufferedImage[] downPlayer;
-	private int rightDirection = 0,leftDirection = 1,upDirection = 2, downDirection = 3;
+	private int rightDirection = 0, leftDirection = 1, upDirection = 2, downDirection = 3;
 	private int curDirection = rightDirection;
-	
-	
+
+	public int life = 100;
+	public int maxLife = 100;
+
+	public int ammo = 0;
+
+	public BufferedImage hitPlayer;
+	public boolean isDamage = false;
+	private int damageFrames = 0, maxDamageFrames = 10;
+	private int gunType = 0; // 0 - without gun //1+ have gun
+
+	public boolean shoot = false;
+
 	public Player(int x, int y, int width, int height, BufferedImage sprite) {
 		super(x, y, width, height, sprite);
 		rightPlayer = new BufferedImage[2];
@@ -38,53 +51,172 @@ public class Player extends Entity{
 		downPlayer[1] = spritesheet.getSprite(48 + 32, 0, 16, 16);
 		upPlayer[0] = spritesheet.getSprite(48 + 48, 0, 16, 16);
 		upPlayer[1] = spritesheet.getSprite(48 + 48 + 16, 0, 16, 16);
-		
+		hitPlayer = spritesheet.getSprite(128, 0, 16, 16);
+
 	}
-	
+
 	public void tick() {
-		moved=false;
-		if(right) {
+		// Camera.x = this.getX() - Game.WIDTH/2;
+		// Camera.y = this.getY() - Game.HEIGHT/2;
+		Camera.x = Camera.clamp((int) (this.getX() - Game.WIDTH / 2), 0, World.WIDTH * 16 - Game.WIDTH);
+		Camera.y = Camera.clamp((int) (this.getY() - Game.HEIGHT / 2), 0, World.HEIGHT * 16 - Game.HEIGHT);
+
+		moved = false;
+
+		if (right && World.isFree((int) (x + speed), (int) y)) {
 			moved = true;
 			curDirection = rightDirection;
-			x+=speed;
+			x += speed;
 		}
-		if(left) {
+		if (left && World.isFree((int) (x - speed), (int) y)) {
 			moved = true;
 			curDirection = leftDirection;
-			x-=speed;
+			x -= speed;
 		}
-		if(up) {
+		if (up && World.isFree((int) x, (int) (y - speed))) {
 			moved = true;
 			curDirection = upDirection;
-			y-=speed;
+			y -= speed;
 		}
-		if(down) {
+		if (down && World.isFree((int) x, (int) (y + speed))) {
 			moved = true;
 			curDirection = downDirection;
-			y+=speed;
+			y += speed;
 		}
-		if(moved) {
+
+		if (moved) {
 			frames++;
-			if(frames > maxFrames) {
+			if (frames > maxFrames) {
 				frames = 0;
 				index++;
-				if(index>maxIndex) {
+				if (index > maxIndex) {
 					index = 0;
 				}
 			}
 		}
+
+		if (isDamage) {
+			damageFrames++;
+			if (damageFrames > maxDamageFrames) {
+				isDamage = false;
+				damageFrames = 0;
+			}
+		}
+
+		if (shoot && gunType > 0 && ammo > 0) {
+			shoot = false;
+			int dx = 0;
+			int dy = 0;
+			int px = 0;
+			int py = 0;
+			if (curDirection == rightDirection) {
+				px = 16;
+				py = 6;
+				dx = 1;
+				dy = 0;
+			}
+			if (curDirection == leftDirection) {
+				px = -6;
+				py = 6;
+				dx = -1;
+				dy = 0;
+			}
+			if (curDirection == upDirection) {
+				px = 12;
+				py = 4;
+				dx = 0;
+				dy = -1;
+			}
+			if (curDirection == downDirection) {
+				py = 10;
+				dx = 0;
+				dy = 1;
+			}
+			Shoot s = new Shoot(x + px, y + py, 3, 3, null, dx, dy);
+			Game.shoots.add(s);
+			ammo--;
+		} else {
+			shoot = false;
+		}
+
+		checkCollisionItems();
 	}
-	
+
 	public void render(Graphics g) {
-		if(curDirection == rightDirection) {
-			g.drawImage(rightPlayer[index], x, y, null);
-		}else if(curDirection == leftDirection) {
-			g.drawImage(leftPlayer[index], x, y, null);
+		int dx = (int) (x - Camera.x);
+		int dy = (int) (y - Camera.y);
+		if (isDamage) {
+			g.drawImage(hitPlayer, dx, dy, null);
+			return;
 		}
-		if(curDirection == upDirection) {
-			g.drawImage(upPlayer[index], x, y, null);
-		}else if(curDirection == downDirection) {
-			g.drawImage(downPlayer[index], x, y, null);
+		if (curDirection == rightDirection) {
+			g.drawImage(rightPlayer[index], dx, dy, null);
+			if (gunType > 0) {
+				g.drawImage(Entity.GUN_RIGHT, dx + 9, dy + 2, null);
+			}
+		} else if (curDirection == leftDirection) {
+			g.drawImage(leftPlayer[index], dx, dy, null);
+			if (gunType > 0) {
+				g.drawImage(Entity.GUN_LEFT, dx - 11, dy + 2, null);
+			}
+		}
+		if (curDirection == upDirection) {
+			if (gunType > 0) {
+				g.drawImage(Entity.GUN_UP, dx + 7, dy - 2, null);
+			}
+			g.drawImage(upPlayer[index], dx, dy, null);
+
+		} else if (curDirection == downDirection) {
+			g.drawImage(downPlayer[index], dx, dy, null);
+			if (gunType > 0) {
+				g.drawImage(Entity.GUN_DOWN, dx - 7, dy + 4, null);
+			}
 		}
 	}
+
+	public void hurt(int amount) {
+		if (life <= 0 || life - amount <= 0) {
+			if (Game.DEBUG) {
+				return;
+			}
+
+			Game.Reset();
+
+		}
+		isDamage = true;
+		life -= amount;
+	}
+
+	public void cure(int amount) {
+		if (life >= maxLife || life + amount >= maxLife) {
+			life = maxLife;
+			return;
+		}
+		life += amount;
+	}
+
+	public void addAmmo(int amount) {
+		ammo += amount;
+	}
+
+	private void checkCollisionItems() {
+		for (int i = 0; i < Game.entities.size(); i++) {
+			Entity en = Game.entities.get(i);
+			if (isCollinding(en, this)) {
+				if (en instanceof Life) {
+					cure(((Life) en).healthPoint);
+					Game.entities.remove(i);
+				} else if (en instanceof Flower) {
+					addAmmo(((Flower) en).amountAmmo);
+					Game.entities.remove(i);
+				} else if (en instanceof Gun) {
+					// more gun make more ids
+					gunType = 1;
+					Game.entities.remove(i);
+					ammo += 10;
+				}
+			}
+		}
+	}
+
 }
