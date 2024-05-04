@@ -35,6 +35,9 @@ public class Player extends Entity {
 	private int gunType = 0; // 0 - without gun //1+ have gun
 
 	public boolean shoot = false;
+	public boolean mouseShoot = false;
+
+	public int mousex, mousey;
 
 	public Player(int x, int y, int width, int height, BufferedImage sprite) {
 		super(x, y, width, height, sprite);
@@ -137,6 +140,38 @@ public class Player extends Entity {
 			ammo--;
 		} else {
 			shoot = false;
+		}
+
+		if (mouseShoot && gunType > 0 && ammo > 0) {
+			mouseShoot = false;
+
+			int px = 2, py = 2;
+			double angle = 0;
+			
+				if (curDirection == rightDirection) {
+					px = 18;
+					py = 7;
+				} else if(curDirection == leftDirection) {
+					px = -13;
+					py = 7;
+				}else if(curDirection == upDirection) {
+					px = 13;
+					py = 5;
+				}else if(curDirection == downDirection) {
+					px = -3;
+					py = 14;
+				}
+			
+			angle = Math.atan2(mousey - this.getY() + Camera.y, mousex - this.getX() + Camera.x);
+
+			double dx = Math.cos(angle);
+			double dy = Math.sin(angle);
+
+			Shoot s = new Shoot(x + px, y + py, 3, 3, null, dx, dy);
+			Game.shoots.add(s);
+			ammo--;
+		} else {
+			mouseShoot = false;
 		}
 
 		checkCollisionItems();

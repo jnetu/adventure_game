@@ -9,13 +9,13 @@ import com.jnetu.world.Camera;
 
 public class Shoot extends Entity {
 
-	private int dx;
-	private int dy;
+	private double dx;
+	private double dy;
 	private double speed;
 	private long creationTime;
 
-	public Shoot(int x, int y, int width, int height, BufferedImage sprite, int dx, int dy) {
-		super(x, y, width, height, sprite);
+	public Shoot(double d, double e, int width, int height, BufferedImage sprite, double dx, double dy) {
+		super(d, e, width, height, sprite);
 		this.dx = dx;
 		this.dy = dy;
 		this.speed = 4;
@@ -37,6 +37,6 @@ public class Shoot extends Entity {
 
 	public void render(Graphics g) {
 		g.setColor(Color.YELLOW);
-		g.fillOval(x - Camera.x, y - Camera.y, 3, 3);
+		g.fillOval((int)x - Camera.x, (int)y - Camera.y, 3, 3);
 	}
 }
