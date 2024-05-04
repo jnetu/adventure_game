@@ -5,7 +5,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontFormatException;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.Rectangle;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -18,7 +20,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import java.util.EventListener;
 import javax.swing.JFrame;
 
 import com.jnetu.entities.Enemy;
@@ -27,7 +28,6 @@ import com.jnetu.entities.Player;
 import com.jnetu.entities.Shoot;
 import com.jnetu.graphics.Spritesheet;
 import com.jnetu.graphics.UI;
-import com.jnetu.world.Camera;
 import com.jnetu.world.World;
 
 public class Game extends Canvas implements Runnable, KeyListener, MouseListener {
@@ -36,13 +36,15 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	public static final int WIDTH = 300;
 	public static final int HEIGHT = 300;
 	public static final int SCALE = 2;
+	public static int actualLevel = 1, maxLevel = 2;
+
 	public static JFrame frame;
 
 	private Thread thread;
 
 	private BufferedImage image;
 
-	public static boolean DEBUG = true;
+	public static boolean DEBUG = false;
 
 	public static Spritesheet spritesheet;
 	public static List<Entity> entities;
@@ -58,6 +60,11 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	public UI ui;
 	public static Font font;
 	public InputStream fontStream = ClassLoader.getSystemClassLoader().getResourceAsStream("8bit.TTF");
+	// MENU,GAMEOVER,RUN
+	public static String gameState = "MENU";
+	public boolean pressReset = false;
+
+	public Menu menu;
 
 	public Game() {
 		addKeyListener(this);
@@ -73,14 +80,16 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 
 		random = new Random();
 		image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB); // layer background
+		spritesheet = new Spritesheet("/spritesheet.png");
+
 		enemies = new ArrayList<Enemy>();
 		entities = new ArrayList<Entity>();
-		spritesheet = new Spritesheet("/spritesheet.png");
+		shoots = new ArrayList<Shoot>();
 		player = new Player(0, 0, 16, 16, spritesheet.getSprite(0, 0, 16, 16));
 		entities.add(player);
-		world = new World("/map.png");
+		world = new World("/map1.png");
+
 		ui = new UI();
-		shoots = new ArrayList<Shoot>();
 
 		try {
 			font = Font.createFont(Font.TRUETYPE_FONT, fontStream).deriveFont(30f);
@@ -92,15 +101,31 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 			e.printStackTrace();
 		}
 
+		menu = new Menu();
+		
+		Sound.music.loop();
 	}
 
 	public static void Reset() {
 		enemies = new ArrayList<Enemy>();
 		entities = new ArrayList<Entity>();
-		spritesheet = new Spritesheet("/spritesheet.png");
+		shoots = new ArrayList<Shoot>();
 		player = new Player(0, 0, 16, 16, spritesheet.getSprite(0, 0, 16, 16));
 		entities.add(player);
-		world = new World("/map.png");
+		world = new World("/map1.png");
+		gameState = "RUN";
+		Sound.music.reset();
+		Sound.music.loop();
+	}
+
+	public static void LoadWorld(String level) {
+		enemies = new ArrayList<Enemy>();
+		entities = new ArrayList<Entity>();
+		shoots = new ArrayList<Shoot>();
+		player = new Player(0, 0, 16, 16, spritesheet.getSprite(0, 0, 16, 16));
+		entities.add(player);
+		world = new World("/" + level);
+		gameState = "RUN";
 	}
 
 	public static void main(String[] args) {
@@ -123,19 +148,39 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	}
 
 	public void tick() {
-		for (int i = 0; i < entities.size(); i++) {
-			Entity e = entities.get(i);
-			e.tick();
+		if (gameState == "RUN") {
+
+			for (int i = 0; i < entities.size(); i++) {
+				Entity e = entities.get(i);
+				e.tick();
+			}
+			for (int i = 0; i < shoots.size(); i++) {
+				Shoot s = shoots.get(i);
+				s.tick();
+			}
+
+			// rule complete
+			if (enemies.size() <= 0) {
+				actualLevel++;
+				if (actualLevel > maxLevel) {
+					actualLevel = 1;
+				}
+				String levelFormat = "map" + actualLevel + ".png";
+				LoadWorld(levelFormat);
+			}
+			pressReset = false;
+		} else if (gameState == "GAMEOVER") {
+			Sound.music.stop();
+			if (pressReset) {
+				pressReset = false;
+				
+				Reset();
+			}
+
+		} else if (gameState == "MENU") {
+			menu.tick();
 		}
-		for (int i = 0; i < shoots.size(); i++) {
-			Shoot s = shoots.get(i);
-			s.tick();
-		}
-		
-		//rule complete
-		if(enemies.size() <= 0) {
-		System.out.println("oi");	
-		}
+
 	}
 
 	public void render() {
@@ -169,6 +214,20 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 		g = bs.getDrawGraphics();
 		g.drawImage(image, 0, 0, WIDTH * SCALE, HEIGHT * SCALE, null);
 		ui.drawStrings(g);
+
+		if (gameState == "GAMEOVER") {
+			g.setColor(Color.BLACK);
+			g.fillRect(0, 0, WIDTH * SCALE, HEIGHT * SCALE);
+			g.setColor(Color.WHITE);
+			FontMetrics metrics = g.getFontMetrics(font);
+
+			Rectangle rect = new Rectangle(WIDTH * SCALE, HEIGHT * SCALE);
+			g.drawString("Game Over", 200, 310);
+
+			g.drawString("Press R to Restart", 130, 410);
+		} else if (gameState == "MENU") {
+			menu.render(g);
+		}
 
 		bs.show();
 
@@ -224,14 +283,42 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 		if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
 			System.out.println("cima");
 			player.up = true;
+			if (gameState == "MENU") {
+				menu.up = true;
+			}
 		} else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
 			System.out.println("baixo");
 			player.down = true;
+			if (gameState == "MENU") {
+				menu.down = true;
+			}
 		}
 
 		if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == KeyEvent.VK_X) {
 			System.out.println("shoot");
 			player.shoot = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_R || e.getKeyCode() == KeyEvent.VK_CONTROL
+				|| e.getKeyCode() == KeyEvent.VK_ENTER) {
+			pressReset = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_ENTER || e.getKeyCode() == KeyEvent.VK_CONTROL
+				|| e.getKeyCode() == KeyEvent.VK_ENTER) {
+			menu.enter = true;
+		}
+		if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+			if (gameState == "MENU") {
+				
+				if(menu.pause) {
+					gameState = "RUN";
+					menu.pause = false;
+				}
+				
+			} else {
+
+				gameState = "MENU";
+				menu.pause = true;
+			}
 		}
 
 	}
@@ -250,9 +337,15 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 		if (e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_W) {
 			System.out.println("cima");
 			player.up = false;
+			if (gameState == "MENU") {
+				menu.up = false;
+			}
 		} else if (e.getKeyCode() == KeyEvent.VK_DOWN || e.getKeyCode() == KeyEvent.VK_S) {
 			System.out.println("baixo");
 			player.down = false;
+			if (gameState == "MENU") {
+				menu.down = false;
+			}
 		}
 
 	}

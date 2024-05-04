@@ -214,8 +214,7 @@ public class Player extends Entity {
 			if (Game.DEBUG) {
 				return;
 			}
-
-			Game.Reset();
+			Game.gameState = "GAMEOVER";
 
 		}
 		isDamage = true;
