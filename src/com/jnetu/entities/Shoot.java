@@ -14,22 +14,21 @@ public class Shoot extends Entity {
 	private double speed;
 	private long creationTime;
 
-	public Shoot(double d, double e, int width, int height, BufferedImage sprite, double dx, double dy) {
-		super(d, e, width, height, sprite);
+	public Shoot(double x, double y, int width, int height, BufferedImage sprite, double dx, double dy) {
+		super(x, y, width, height, sprite);
+		this.speed = 4;
 		this.dx = dx;
 		this.dy = dy;
-		this.speed = 4;
-		creationTime = System.currentTimeMillis();
+		this.creationTime = System.currentTimeMillis();
 	}
 
 	public void tick() {
 		x += dx * speed;
 		y += dy * speed;
-		timeToDestroyObject(1000);
+		checkForDestruction(1000);
 	}
 
-	private void timeToDestroyObject(int millisecondsToDestroy) {
-
+	private void checkForDestruction(int millisecondsToDestroy) {
 		if (System.currentTimeMillis() - creationTime >= millisecondsToDestroy) {
 			Game.shoots.remove(this);
 		}

@@ -27,7 +27,7 @@ public class Player extends Entity {
 	public int life = 100;
 	public int maxLife = 100;
 
-	public int ammo = 0;
+	public int ammo = 100;
 
 	public BufferedImage hitPlayer;
 	public boolean isDamage = false;
@@ -143,35 +143,37 @@ public class Player extends Entity {
 		}
 
 		if (mouseShoot && gunType > 0 && ammo > 0) {
-			mouseShoot = false;
+		    mouseShoot = false;
 
-			int px = 2, py = 2;
-			double angle = 0;
-			
-				if (curDirection == rightDirection) {
-					px = 18;
-					py = 7;
-				} else if(curDirection == leftDirection) {
-					px = -13;
-					py = 7;
-				}else if(curDirection == upDirection) {
-					px = 13;
-					py = 5;
-				}else if(curDirection == downDirection) {
-					px = -3;
-					py = 14;
-				}
-			
-			angle = Math.atan2(mousey - this.getY() + Camera.y, mousex - this.getX() + Camera.x);
+		    int px = 2, py = 2;
+		    double angle = 0;
+		    
+		    if (curDirection == rightDirection) {
+		        px = 18;
+		        py = 7;
+		    } else if (curDirection == leftDirection) {
+		        px = -13;
+		        py = 7;
+		    } else if (curDirection == upDirection) {
+		        px = 13;
+		        py = 5;
+		    } else if (curDirection == downDirection) {
+		        px = -3;
+		        py = 14;
+		    }
 
-			double dx = Math.cos(angle);
-			double dy = Math.sin(angle);
+		    angle = Math.atan2(mousey - this.getY() - Camera.y, mousex - this.getX() - Camera.x);
 
-			Shoot s = new Shoot(x + px, y + py, 3, 3, null, dx, dy);
-			Game.shoots.add(s);
-			ammo--;
+		    double dx = Math.cos(angle);
+		    double dy = Math.sin(angle);
+
+		    //int speed = 15; 
+
+		    Shoot s = new Shoot(x + px, y + py, 3, 3, null, dx, dy);
+		    Game.shoots.add(s);
+		    ammo--;
 		} else {
-			mouseShoot = false;
+		    mouseShoot = false;
 		}
 
 		checkCollisionItems();
