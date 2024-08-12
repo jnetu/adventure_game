@@ -82,8 +82,8 @@ public class World {
 	public void render(Graphics g) {
 		int xstart = Camera.x / 16;
 		int ystart = Camera.y / 16;
-		int xfinal = xstart + (Game.WIDTH / 16);
-		int yfinal = ystart + (Game.HEIGHT / 16);
+		int xfinal = xstart + (Game.WIDTH / 16) + 1;
+		int yfinal = ystart + (Game.HEIGHT / 16) + 1;
 
 		for (int xx = xstart; xx <= xfinal; xx++) {
 			for (int yy = ystart; yy <= yfinal; yy++) {
