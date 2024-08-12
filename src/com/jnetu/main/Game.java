@@ -7,7 +7,10 @@ import java.awt.Font;
 import java.awt.FontFormatException;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
@@ -35,7 +38,7 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	private static final long serialVersionUID = 1L;
 	public static final int WIDTH = 300;
 	public static final int HEIGHT = 300;
-	public static final int SCALE = 2;
+	public static final int SCALE = 3;
 	public static int actualLevel = 1, maxLevel = 2;
 
 	public static JFrame frame;
@@ -63,21 +66,49 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	// MENU,GAMEOVER,RUN
 	public static String gameState = "MENU";
 	public boolean pressReset = false;
+	private GraphicsDevice graphicsDevice;
+	
 
 	public Menu menu;
-
+	
+	private void setFullScreen(JFrame frame) {
+	    if (graphicsDevice.isFullScreenSupported()) {
+	        graphicsDevice.setFullScreenWindow(frame);
+	    } else {
+	        System.err.println("Fullscreen mode not supported");
+	    }
+	}
+	
+	private void exitFullScreen(JFrame frame) {
+	    if (graphicsDevice != null && graphicsDevice.getFullScreenWindow() == frame) {
+	        graphicsDevice.setFullScreenWindow(null);
+	        frame.setUndecorated(false);
+	        frame.setResizable(true);
+	        frame.pack();
+	        frame.setLocationRelativeTo(null);
+	    }
+	}
 	public Game() {
 		addKeyListener(this);
 		addMouseListener(this);
-		this.setPreferredSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE)); // set canvas dimensions
+		//this.setPreferredSize(new Dimension(WIDTH * SCALE, HEIGHT * SCALE)); // set canvas dimensions
+		this.setPreferredSize(new Dimension(Toolkit.getDefaultToolkit().getScreenSize()));
 		frame = new JFrame("adventure game");
 		frame.add(this); // add Canvas
+		frame.setUndecorated(true);
+		
+		graphicsDevice = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+		setFullScreen(frame);
+		//exitFullScreen(frame);
+		
 		frame.pack();
 		frame.setResizable(true);
 		frame.setLocationRelativeTo(null);// null --> center
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // break application on exit
 		frame.setVisible(true);
-
+		
+		
+		
 		random = new Random();
 		image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_RGB); // layer background
 		spritesheet = new Spritesheet("/spritesheet.png");
@@ -183,56 +214,133 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 
 	}
 
+//	public void render() {
+//		BufferStrategy bs = this.getBufferStrategy();
+//		if (bs == null) {
+//			this.createBufferStrategy(3);
+//			return;
+//		}
+//		// draw on background image
+//		Graphics g = image.getGraphics();
+//		g.setColor(new Color(100, 100, 100));
+//		g.fillRect(0, 0, WIDTH, HEIGHT);
+//
+//		// render world
+//		world.render(g);
+//
+//		// render entities
+//		for (int i = 0; i < entities.size(); i++) {
+//			Entity e = entities.get(i);
+//			e.render(g);
+//		}
+//		for (int i = 0; i < shoots.size(); i++) {
+//			Shoot s = shoots.get(i);
+//			s.render(g);
+//		}
+//
+//		ui.render(g);
+//
+//		// draw background
+//		g.dispose();
+//		g = bs.getDrawGraphics();
+//		//g.drawImage(image, 0, 0, WIDTH * SCALE, HEIGHT * SCALE, null);
+//		g.drawImage(image, 0, 0, 
+//				Toolkit.getDefaultToolkit().getScreenSize().width, 
+//				Toolkit.getDefaultToolkit().getScreenSize().height, 
+//				null);
+//		
+//		
+//		ui.drawStrings(g);
+//
+//		if (gameState == "GAMEOVER") {
+//			g.setColor(Color.BLACK);
+//			g.fillRect(0, 0, WIDTH * SCALE, HEIGHT * SCALE);
+//			g.setColor(Color.WHITE);
+//			FontMetrics metrics = g.getFontMetrics(font);
+//
+//			Rectangle rect = new Rectangle(WIDTH * SCALE, HEIGHT * SCALE);
+//			g.drawString("Game Over", 200, 310);
+//
+//			g.drawString("Press R to Restart", 130, 410);
+//		} else if (gameState == "MENU") {
+//			menu.render(g);
+//		}
+//
+//		bs.show();
+//
+//	}
+	
 	public void render() {
-		BufferStrategy bs = this.getBufferStrategy();
-		if (bs == null) {
-			this.createBufferStrategy(3);
-			return;
-		}
-		// draw on background image
-		Graphics g = image.getGraphics();
-		g.setColor(new Color(100, 100, 100));
-		g.fillRect(0, 0, WIDTH, HEIGHT);
+        BufferStrategy bs = this.getBufferStrategy();
+        if (bs == null) {
+            this.createBufferStrategy(3);
+            return;
+        }
+        Graphics g = image.getGraphics();
+        g.setColor(new Color(100, 100, 100));
+        g.fillRect(0, 0, WIDTH, HEIGHT);
 
-		// render world
-		world.render(g);
+        world.render(g);
 
-		// render entities
-		for (int i = 0; i < entities.size(); i++) {
-			Entity e = entities.get(i);
-			e.render(g);
-		}
-		for (int i = 0; i < shoots.size(); i++) {
-			Shoot s = shoots.get(i);
-			s.render(g);
-		}
+        for (Entity e : entities) {
+            e.render(g);
+        }
+        for (Shoot s : shoots) {
+            s.render(g);
+        }
 
-		ui.render(g);
+        ui.render(g);
+        g.dispose();
+        g = bs.getDrawGraphics();
 
-		// draw background
-		g.dispose();
-		g = bs.getDrawGraphics();
-		g.drawImage(image, 0, 0, WIDTH * SCALE, HEIGHT * SCALE, null);
-		ui.drawStrings(g);
+        // Calcular escala e posicionamento centralizado
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
 
-		if (gameState == "GAMEOVER") {
-			g.setColor(Color.BLACK);
-			g.fillRect(0, 0, WIDTH * SCALE, HEIGHT * SCALE);
-			g.setColor(Color.WHITE);
-			FontMetrics metrics = g.getFontMetrics(font);
+        int newWidth = screenWidth;
+        int newHeight = (screenWidth * HEIGHT) / WIDTH;
 
-			Rectangle rect = new Rectangle(WIDTH * SCALE, HEIGHT * SCALE);
-			g.drawString("Game Over", 200, 310);
+        if (newHeight > screenHeight) {
+            newHeight = screenHeight;
+            newWidth = (screenHeight * WIDTH) / HEIGHT;
+        }
 
-			g.drawString("Press R to Restart", 130, 410);
-		} else if (gameState == "MENU") {
-			menu.render(g);
-		}
+        int xOffset = (screenWidth - newWidth) / 2;
+        int yOffset = (screenHeight - newHeight) / 2;
 
-		bs.show();
+        g.drawImage(image, xOffset, yOffset, newWidth, newHeight, null);
 
-	}
+        if (gameState.equals("GAMEOVER")) {
+            renderGameOver(g, xOffset, yOffset, newWidth, newHeight);
+        } else if (gameState.equals("MENU")) {
+            //menu.render(g, xOffset, yOffset, newWidth, newHeight);
+        	menu.render(g);
+        }
 
+        bs.show();
+    }
+	
+	private void renderGameOver(Graphics g, int xOffset, int yOffset, int width, int height) {
+        g.setColor(Color.BLACK);
+        g.fillRect(xOffset, yOffset, width, height);
+        g.setColor(Color.WHITE);
+        g.setFont(font);
+        FontMetrics metrics = g.getFontMetrics(font);
+
+        String gameOverText = "Game Over";
+        String restartText = "Press R to Restart";
+
+        int gameOverX = xOffset + (width - metrics.stringWidth(gameOverText)) / 2;
+        int gameOverY = yOffset + height / 2 - metrics.getHeight() / 2;
+        int restartX = xOffset + (width - metrics.stringWidth(restartText)) / 2;
+        int restartY = gameOverY + metrics.getHeight() + 20;
+
+        g.drawString(gameOverText, gameOverX, gameOverY);
+        g.drawString(restartText, restartX, restartY);
+    }
+	
+	
 	@Override
 	public void run() {
 		requestFocus();
