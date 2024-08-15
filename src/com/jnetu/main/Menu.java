@@ -59,14 +59,19 @@ public class Menu {
 	    int gameWidth = Game.WIDTH * Game.SCALE;
 	    int gameHeight = Game.HEIGHT * Game.SCALE;
 	    
+	    
 	    // Calcular a escala para manter a proporção correta
 	    double scaleX = (double) screenWidth / gameWidth;
 	    double scaleY = (double) screenHeight / gameHeight;
 	    double scale = Math.min(scaleX, scaleY);
 
-	    // Calcular o centro da tela
+	    // Calcular o offset da tela
 	    int offsetX = (int) ((screenWidth - gameWidth * scale) / 2);
 	    int offsetY = (int) ((screenHeight - gameHeight * scale) / 2);
+	    
+	    // Calcular o centro da tela
+	    int centerX = (int) (gameWidth * scale) / 2 + offsetX;
+	    int centerY = (int) (gameHeight * scale) / 2 + offsetY;
 	    
 	    // Ajustar as posições de desenho com base na escala e offset
 	    int menuWidth = 200; // Largura do menu
@@ -89,7 +94,7 @@ public class Menu {
 	    g.drawString(title, screenWidth / 2 - titleWidth / 2, startY - 40);
 
 	    // Desenhar as opções do menu
-	    String[] options = {"Novo Jogo", "Carregar", "Configuracoes", "Sair"};
+	    //String[] options = {"Novo Jogo", "Carregar", "Configuracoes", "Sair"};
 	    int optionHeight = metrics.getHeight() + 10; // Altura da opção com margem
 	    for (int i = 0; i < options.length; i++) {
 	        String option = options[i];

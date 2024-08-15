@@ -31,14 +31,15 @@ import com.jnetu.entities.Player;
 import com.jnetu.entities.Shoot;
 import com.jnetu.graphics.Spritesheet;
 import com.jnetu.graphics.UI;
+import com.jnetu.world.Camera;
 import com.jnetu.world.World;
 
 public class Game extends Canvas implements Runnable, KeyListener, MouseListener {
 
 	private static final long serialVersionUID = 1L;
-	public static final int WIDTH = 300;
-	public static final int HEIGHT = 300;
-	public static final int SCALE = 3;
+	public static final int WIDTH = 256;
+	public static final int HEIGHT = 256;
+	public static final int SCALE = 1;
 	public static int actualLevel = 1, maxLevel = 2;
 
 	public static JFrame frame;
@@ -70,6 +71,8 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 	
 
 	public Menu menu;
+	
+	
 	
 	private void setFullScreen(JFrame frame) {
 	    if (graphicsDevice.isFullScreenSupported()) {
@@ -276,10 +279,12 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
             this.createBufferStrategy(3);
             return;
         }
+        
+        
         Graphics g = image.getGraphics();
         g.setColor(new Color(100, 100, 100));
         g.fillRect(0, 0, WIDTH, HEIGHT);
-
+        
         world.render(g);
 
         for (Entity e : entities) {
@@ -288,31 +293,27 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
         for (Shoot s : shoots) {
             s.render(g);
         }
-
-        ui.render(g);
+        
+        
         g.dispose();
         g = bs.getDrawGraphics();
+        
 
-        // Calcular escala e posicionamento centralizado
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        int screenWidth = screenSize.width;
-        int screenHeight = screenSize.height;
-
-        int newWidth = screenWidth;
-        int newHeight = (screenWidth * HEIGHT) / WIDTH;
-
-        if (newHeight > screenHeight) {
-            newHeight = screenHeight;
-            newWidth = (screenHeight * WIDTH) / HEIGHT;
-        }
-
-        int xOffset = (screenWidth - newWidth) / 2;
-        int yOffset = (screenHeight - newHeight) / 2;
-
-        g.drawImage(image, xOffset, yOffset, newWidth, newHeight, null);
-
+        ScreenDimensions screenDimensions = new ScreenDimensions(WIDTH, HEIGHT);
+       
+        
+        g.drawImage(image, screenDimensions.getXOffset(), screenDimensions.getYOffset(), 
+        		screenDimensions.getNewWidth(), 
+        		screenDimensions.getNewHeight(), null);
+        
+        
+        ui.render(g);
+        
         if (gameState.equals("GAMEOVER")) {
-            renderGameOver(g, xOffset, yOffset, newWidth, newHeight);
+            renderGameOver(g, screenDimensions.getXOffset(), screenDimensions.getYOffset(), 
+            		screenDimensions.getNewWidth(), 
+            		screenDimensions.getNewHeight());
+            
         } else if (gameState.equals("MENU")) {
             //menu.render(g, xOffset, yOffset, newWidth, newHeight);
         	menu.render(g);
@@ -465,10 +466,52 @@ public class Game extends Canvas implements Runnable, KeyListener, MouseListener
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		// TODO Auto-generated method stub
-		player.mouseShoot = true;
-		player.mousex = e.getX() / SCALE;
-		player.mousey = e.getY() / SCALE;
+	    if(gameState == "MENU") {
+	    	return;
+	    }
+	    player.mouseShoot = true;
+	    
+//	    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+//	    int screenWidth = screenSize.width;
+//	    int screenHeight = screenSize.height;
+//
+//	    int newWidth = screenWidth;
+//	    int newHeight = (screenWidth * HEIGHT) / WIDTH;
+//
+//	    if (newHeight > screenHeight) {
+//	        newHeight = screenHeight;
+//	        newWidth = (screenHeight * WIDTH) / HEIGHT;
+//	    }
+//
+//	    int xOffset = (screenWidth - newWidth) / 2;
+//	    int yOffset = (screenHeight - newHeight) / 2;
+//
+//	    int scaledMouseX = (e.getX() - xOffset) * WIDTH / newWidth;
+//	    int scaledMouseY = (e.getY() - yOffset) * HEIGHT / newHeight;
+//
+//	    player.mousex = scaledMouseX;
+//	    player.mousey = scaledMouseY;
+//
+//	    double angle = Math.atan2(scaledMouseY - player.getY() + Camera.y, 
+//	                              scaledMouseX - player.getX() + Camera.x);
+	    
+	    
+	    ScreenDimensions screenDimensions = new ScreenDimensions(WIDTH, HEIGHT);
+
+	    int scaledMouseX = screenDimensions.scaleX(e.getX(), WIDTH);
+	    int scaledMouseY = screenDimensions.scaleY(e.getY(), HEIGHT);
+
+	    player.mousex = scaledMouseX;
+	    player.mousey = scaledMouseY;
+
+	    double angle = Math.atan2(scaledMouseY - player.getY() + Camera.y, 
+	                              scaledMouseX - player.getX() + Camera.x);
+
+	    
+	    // Debugging
+	    System.out.println("Mouse Original: (" + e.getX() + ", " + e.getY() + ")");
+	    System.out.println("Mouse Scaled: (" + scaledMouseX + ", " + scaledMouseY + ")");
+	    System.out.println("Angle: " + Math.toDegrees(angle));
 	}
 
 	@Override

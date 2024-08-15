@@ -145,9 +145,8 @@ public class Player extends Entity {
 		if (mouseShoot && gunType > 0 && ammo > 0) {
 		    mouseShoot = false;
 
+		    // Definindo as posições iniciais do disparo baseadas na direção atual do jogador
 		    int px = 2, py = 2;
-		    double angle = 0;
-		    
 		    if (curDirection == rightDirection) {
 		        px = 18;
 		        py = 7;
@@ -162,16 +161,23 @@ public class Player extends Entity {
 		        py = 14;
 		    }
 
-		    angle = Math.atan2(mousey - this.getY() - Camera.y, mousex - this.getX() - Camera.x);
-
+		    // Calculando o ângulo entre o player e o mouse levando em conta o deslocamento da câmera
+		    double angle = Math.atan2((mousey + Camera.y) - (this.getY() + py), 
+		                              (mousex + Camera.x) - (this.getX() + px));
+		    
+		    // Convertendo o ângulo para as componentes dx e dy
 		    double dx = Math.cos(angle);
 		    double dy = Math.sin(angle);
 
-		    //int speed = 15; 
-
+		    // Criando o disparo
 		    Shoot s = new Shoot(x + px, y + py, 3, 3, null, dx, dy);
 		    Game.shoots.add(s);
 		    ammo--;
+
+		    // Debugging para verificar os valores
+		    System.out.println("px: " + px + ", py: " + py);
+		    System.out.println("Angle: " + Math.toDegrees(angle));
+		    System.out.println("dx: " + dx + ", dy: " + dy);
 		} else {
 		    mouseShoot = false;
 		}
